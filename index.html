@@ -8,103 +8,109 @@
     <script src="./dist/mrp.js"></script>
     <script src="./public/js/nedb.min.js"></script>
     <script src="./public/js/localforage.min.js"></script>
-    <script src="./public/js/vue.js"></script>
+    <!--<script src="./public/js/vue.js"></script>-->
     <script src="./public/js/db.js"></script>
     <script src="./public/js/utils.js"></script>
-    <style>
-        table {
-            border-collapse: collapse;
-        }
-
-        table,
-        th,
-        td {
-            border: 1px solid black;
-        }
-
-        tr:nth-child(even) {
-            background-color: #e8e8e8;
-        }
-
-        .red {
-            color: red;
-        }
-    </style>
+    <!--vue 3-->
+    <script src="./public/js/vue3.min.js"></script>
+    <!--element-plus-->
+    <link rel="stylesheet" href="./public/css/element-plus.css">
+    <script src="./public/js/element-plus.min.js"></script>
 </head>
 
 <body>
     <div id="app">
-        <a href="./vmrp_v1.0/main.html">vmrp_v1.0</a>
-
-        <form onsubmit="return false" style="display: inline-block;">
-            <input id="search" type="text" autocomplete="off" />
-            <input type="submit" @click="search()" value="搜索" />
-        </form>
-        <input type="checkbox" id="showAdmin" v-model="admin"><label for="showAdmin">显示高级功能</label>
-        <input type="file" id="files" multiple style="display:none" />
-        <button @click="importFile()" v-if="admin">导入文件</button>
-        <button @click="downloadData()" v-if="admin">下载数据</button>
-
-        <div style="margin: 10px;">
-            <button @click="prev()">上页</button>
-            <button @click="next()">下页</button>
-            当前页:{{page}}/{{totalPage}} 每页显示:{{pageSize}} 总数:{{total}}
+        <!--搜索-->
+        <div style="display: flex">
+            <el-link type="primary" href="./vmrp_v1.0/main.html">vmrp_v1.0</el-link>
+            <el-input style="margin: 0 10px;" placeholder="搜索游戏" v-model="searchText" @keyup.enter="search()"></el-input>
+            <el-button type="primary" @click="search()">搜索</el-button>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>info</th>
-                    <th>FileName</th>
-                    <th>DisplayName</th>
-                    <th>Vendor</th>
-                    <th>Desc</th>
-                    <th>Appid</th>
-                    <th>Version</th>
-                    <th>BuilderVersion</th>
-                    <th>Screen</th>
-                    <th>Crc32</th>
-                    <th>Crc32OK</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="item in items">
-                    <td>
+        <!--高级功能-->
+        <div style="display: flex; align-items: center">
+            <el-checkbox style="margin-right: 10px" size="large" v-model="admin">显示高级功能</el-checkbox>
+            <input style="display: none" type="file" ref="inputFileRef" @change="readFiles" multiple />
+            <el-button type="primary" @click="importFile()" v-show="admin">导入文件</el-button>
+            <el-button type="primary" @click="downloadData()" v-show="admin">下载数据</el-button>
+        </div>
+        <!--表格-->
+        <div>
+            <el-table :data="tableData" :height="tableHeight">
+                <el-table-column width="40" type="expand">
+                    <template #default="props">
                         <ul>
-                            <li>Len: {{item.MrpTotalLen}}</li>
-                            <li>Flag: {{item.Flag}}</li>
-                            <li>Plat: {{item.Plat}}</li>
+                            <li>Len: {{props.row.MrpTotalLen}}</li>
+                            <li>Flag: {{props.row.Flag}}</li>
+                            <li>Plat: {{props.row.Plat}}</li>
+                            <li>FileName:
+                                <span v-if="admin">
+                                    <el-link type="primary"
+                                             :href="`/viewMrp.html?f=/public/mrps/${props.row.file}`"
+                                    >{{props.row.FileName}}</el-link>
+                                </span>
+                                <span v-else>
+                                    <el-text>{{props.row.FileName}}</el-text>
+                                </span>
+                            </li>
+                            <li>Desc: {{props.row.Desc}}</li>
                         </ul>
-                    </td>
-                    <td>
-                        <a v-if="admin" :href="'/viewMrp.html?f=/public/mrps/'+item.file">{{item.FileName}}</a>
-                        <span v-else>{{item.FileName}}</span>
-                    </td>
-                    <td>
-                        <a v-if="admin"
-                            :href="'/vmrp_v1.0/main.html?f=/public/temp/'+item.file+'&title='+item.DisplayName">{{item.DisplayName}}</a>
-                        <a v-else
-                            :href="'/vmrp_v1.0/main.html?f=/public/mrps/'+item.file+'&title='+item.DisplayName">{{item.DisplayName}}</a>
-                    </td>
-                    <td>{{item.Vendor}}</td>
-                    <td>{{item.Desc}}</td>
-                    <td>{{item.Appid}}</td>
-                    <td>{{item.Version}}</td>
-                    <td>{{item.BuilderVersion}}</td>
-                    <td>{{item.ScreenWidth}}x{{item.ScreenHeight}}</td>
-                    <td>{{item.Crc32}}</td>
-                    <td :class="{ red: !item.Crc32OK }">{{item.Crc32OK}}</td>
-                    <td>
-                        <button @click="del(item)" v-if="admin">删</button>
-                        <a :href="'/public/mrps/'+item.file" :download="item.file">下载</a>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div style="margin: 10px;">
-            <button @click="prev()">上页</button>
-            <button @click="next()">下页</button>
+                    </template>
+                </el-table-column>
+                <el-table-column label="DisplayName">
+                    <template #default="scope">
+                        <el-tooltip :content="scope.row.Desc" placement="bottom">
+                            <el-link type="primary"
+                                     :href="`/vmrp_v1.0/main.html?f=/public/mrps/${scope.row.file}&title=${scope.row.DisplayName}`"
+                            >{{scope.row.DisplayName}}</el-link>
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="Vendor" label="Vendor"></el-table-column>
+                <el-table-column label="Size">
+                    <template #default="scope">
+                        <el-text>{{ showSize(scope.row.MrpTotalLen) }}</el-text>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="Appid" label="Appid"></el-table-column>
+                <el-table-column prop="Version" label="Version"></el-table-column>
+                <el-table-column prop="BuilderVersion" label="BuilderVersion"></el-table-column>
+                <el-table-column label="Screen">
+                    <template #default="scope">
+                        <el-text>{{ scope.row.ScreenWidth }}x{{ scope.row.ScreenHeight }}</el-text>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="Crc32" label="Crc32"></el-table-column>
+                <el-table-column label="Crc32OK">
+                    <template #default="scope">
+                    <span v-if="scope.row.Crc32OK">
+                        <el-text type="success">{{scope.row.Crc32OK}}</el-text>
+                    </span>
+                        <span v-else>
+                        <el-text type="danger">{{scope.row.Crc32OK}}</el-text>
+                    </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="operation" width="100" fixed="right">
+                    <template #default="scope">
+                        <div style="display: flex; justify-content: center">
+                            <el-button link type="danger" @click="del(scope.row)" v-show="admin">删除</el-button>
+                            <el-link type="primary" :href="`/public/mrps/${scope.row.file}`">下载</el-link>
+                        </div>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+        <!--分页-->
+        <div style="position: fixed; bottom: 15px">
+            <el-pagination
+                background
+                :layout="paginationLayout"
+                :total="total"
+                :page-size="pageSize"
+                :current-page="page"
+                @current-change="changePage"
+                @size-change="changePageSize"
+            ></el-pagination>
         </div>
     </div>
     <script src="./public/js/index.js"></script>

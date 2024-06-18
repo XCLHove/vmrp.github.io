@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title></title>
+    <script src="./midi.js"></script>
+    <!--vue 3-->
+    <script src="../public/js/vue3.min.js"></script>
+    <!--element-plus-->
+    <link rel="stylesheet" href="../public/css/element-plus.css">
+    <script src="../public/js/element-plus.min.js"></script>
     <style>
         * {
             user-select: none;
@@ -13,7 +19,7 @@
         body {
             font-family: arial;
             margin: 0;
-            padding: none;
+            padding: 0;
         }
 
         #main {
@@ -106,15 +112,46 @@
             margin: 5px;
             outline: none;
         }
+
+        .footer {
+            position: fixed;
+            bottom: 5px;
+            left: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+        }
+
+        .menu {
+            position: fixed;
+            top: 40px;
+            left: 10px;
+        }
+
+        .hidden {
+            visibility: hidden;
+        }
+
+        .progress {
+            margin: 5px auto;
+            width: calc(100% - 150px);
+        }
     </style>
-    <script src="./midi.js"></script>
 </head>
 
 <body>
     <div id="main">
+        <!--进度条-->
         <div>
-            <div id="status">Downloading...</div>
-            <progress value="0" max="100" id="progress"></progress>
+            <div class="el-text" id="status">Downloading...</div>
+            <div :class="{hidden: progress === 100}">
+                <el-progress class="progress"
+                             :text-inside="true"
+                             stroke-width="15"
+                             :percentage="progress"
+                ></el-progress>
+            </div>
         </div>
         <div id="screen">
             <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
@@ -128,47 +165,190 @@
                 </div>
             </div>
         </div>
-        <div id="keymap">
+        <div id="keymap" v-show="showKeymap">
             <div>
-                <button id="key_sleft">=</button>
-                <button id="key_up">↑</button>
-                <button id="key_sright">=</button>
-                <button id="key_1">1</button>
-                <button id="key_2">2</button>
-                <button id="key_3">3</button>
-                <button id="key_star">*</button>
+                <el-button style="height: 46px" id="key_sleft">=</el-button>
+                <el-button style="height: 46px" id="key_up">↑</el-button>
+                <el-button style="height: 46px" id="key_sright">=</el-button>
+                <el-button style="height: 46px" id="key_1">1</el-button>
+                <el-button style="height: 46px" id="key_2">2</el-button>
+                <el-button style="height: 46px" id="key_3">3</el-button>
+                <el-button style="height: 46px" id="key_star">*</el-button>
             </div>
             <div>
-                <button id="key_left">←</button>
-                <button id="key_ok"></button>
-                <button id="key_right">→</button>
-                <button id="key_4">4</button>
-                <button id="key_5">5</button>
-                <button id="key_6">6</button>
-                <button id="key_0">0</button>
+                <el-button style="height: 46px" id="key_left">←</el-button>
+                <el-button style="height: 46px" id="key_ok"></el-button>
+                <el-button style="height: 46px" id="key_right">→</el-button>
+                <el-button style="height: 46px" id="key_4">4</el-button>
+                <el-button style="height: 46px" id="key_5">5</el-button>
+                <el-button style="height: 46px" id="key_6">6</el-button>
+                <el-button style="height: 46px" id="key_0">0</el-button>
             </div>
             <div>
                 <button style="visibility: hidden;"></button>
-                <button id="key_down">↓</button>
+                <el-button style="height: 46px" id="key_down">↓</el-button>
                 <button style="visibility: hidden;"></button>
-                <button id="key_7">7</button>
-                <button id="key_8">8</button>
-                <button id="key_9">9</button>
-                <button id="key_pound">#</button>
+                <el-button style="height: 46px" id="key_7">7</el-button>
+                <el-button style="height: 46px" id="key_8">8</el-button>
+                <el-button style="height: 46px" id="key_9">9</el-button>
+                <el-button style="height: 46px" id="key_pound">#</el-button>
             </div>
         </div>
-        <p>
-            按键： 0-9对应0-9键 &nbsp; &nbsp; &nbsp; <span style="color: red;">网页无法发短信，所以不可能产生付费，放心使用</span><br> 减号对应 * 键<br>
-            等号对应 # 键<br> 上下左右或wsad控制方向<br> 回车键：确认/选择/ok<br> q键或左中括号：左功能键<br> e键或右中括号:
-            右功能键<br> tab键：接听键<br> esc键：挂机键<br> 导入文件后不会刷新列表，你可以先打开一个app然后退出app这样就能刷新到<br>
-            注意！模拟器所有文件都是在内存中，刷新网页将导致恢复初始状态<br> MIDI播放采用的是简易的 <a href="https://github.com/chenx/MidiPlayer">MidiPlayer</a> 效果很一般<br><br> 本软件的开源地址是：<a href="https://github.com/zengming00/vmrp"
-                target="_blank">https://github.com/zengming00/vmrp</a><br>本软件采用GNU General Public License v3.0开源协议
-        </p>
         <div>
-            <input type="file" id="files" multiple style="display:none" />
-            <input type="button" id="import" value="导入文件" />
+            <!--菜单-->
+            <div>
+                <div class="menu">
+                    <el-button @click="showMenu = true">菜单</el-button><br/>
+                    <el-button link
+                               type="primary"
+                               @click="toHome"
+                               style="margin-top: 10px"
+                    >返回主页</el-button>
+                </div>
+                <el-drawer v-model="showMenu"
+                           direction="ltr"
+                           >
+                    <template #header>
+                        <div>菜单</div>
+                    </template>
+                    <template #default>
+                        <el-checkbox v-model="showKeymap">显示按键</el-checkbox>
+                        <el-checkbox v-model="showDescription">显示说明</el-checkbox>
+                    </template>
+                    <template #footer>
+                        <!--导入文件-->
+                        <div>
+                            <input type="file" id="files" multiple style="display:none" />
+                            <el-button id="import" type="primary" style="width: 100%">导入文件</el-button>
+                        </div>
+                    </template>
+                </el-drawer>
+            </div>
+            <!--说明-->
+            <div style="border: var(--el-border); border-radius: var(--el-border-radius-base)"
+                 v-show="showDescription">
+                <el-scrollbar :height="descriptionScrollbarHeight">
+                    <el-text>
+                        按键：<br>
+                        0-9对应0-9键<br>
+                        减号对应 * 键<br>
+                        等号对应 # 键<br>
+                        上下左右或wsad控制方向<br>
+                        回车键：确认/选择/ok<br>
+                        q键或左中括号：左功能键<br>
+                        e键或右中括号: 右功能键<br>
+                        tab键：接听键<br>
+                        esc键：挂机键<br>
+                        <br>
+                        导入文件后不会刷新列表，你可以先打开一个app然后退出app这样就能刷新到<br>
+                        MIDI播放采用的是简易的
+                        <el-link type="primary"
+                                 href="https://github.com/chenx/MidiPlayer"
+                        >MidiPlayer</el-link>
+                        效果很一般<br>
+                    </el-text>
+                </el-scrollbar>
+            </div>
+            <!--footer-->
+            <div class="footer">
+                <el-text>
+                    <el-link type="primary" href="https://github.com/zengming00/vmrp" target="_blank">开源地址</el-link>
+                    |
+                    <el-link type="primary" href="https://github.com/vmrp/vmrp/blob/master/LICENSE">开源协议</el-link>
+                </el-text>
+            </div>
         </div>
     </div>
+    <script>
+        const progressUtil = (() => {
+            let progress = 0
+            const onChangeCallbacks = []
+
+            const setValue = (value) => {
+                value = Math.max(0, value)
+                value = Math.min(100, value)
+                progress = Math.floor(value)
+                onChangeCallbacks.forEach((callback) => {
+                    callback(progress)
+                })
+            }
+            const getValue = () => {
+                return progress
+            }
+            const onChange = (callback) => {
+                onChangeCallbacks.push(callback)
+            }
+
+            return {
+                setValue,
+                getValue,
+                onChange,
+            }
+        })()
+
+        const {
+            createApp,
+            onMounted,
+            ref,
+            computed,
+            h
+        } = Vue;
+        const {
+            ElNotification,
+            ElText,
+        } = ElementPlus;
+        const vueApp = createApp({
+            setup() {
+                const showMenu = ref(false)
+                const showDescription = ref(true)
+                const showKeymap = ref(true)
+
+                const progress = ref(100)
+                onMounted(() => {
+                    progressUtil.onChange((value) => {
+                        progress.value = value;
+                    })
+                })
+
+                const descriptionScrollbarHeight = ref(100)
+                onMounted(() => {
+                    descriptionScrollbarHeight.value = window.innerHeight - 625
+                })
+
+                const toHome = () => {
+                    window.location.href = '/'
+                }
+
+                onMounted(() => {
+                    ElNotification.warning({
+                        duration: 10 * 1000,
+                        offset: 25,
+                        message: h('div', {}, [
+                            h(ElText, {
+                                type: 'danger',
+                                style: 'display: block;'
+                            }, '网页无法发短信，所以不可能产生付费，放心使用'),
+                            h(ElText, {
+                                type: 'danger',
+                                style: 'display: block;'
+                            }, '注意！模拟器所有文件都是在内存中，刷新网页将导致恢复初始状态')
+                        ])
+                    })
+                })
+
+                return {
+                    showMenu,
+                    showDescription,
+                    showKeymap,
+                    descriptionScrollbarHeight,
+                    progress,
+                    toHome
+                }
+            }
+        })
+        vueApp.use(ElementPlus)
+        vueApp.mount('#main')
+    </script>
     <script>
         function GetQueryString(name) {
             var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
@@ -455,12 +635,9 @@
         touch_add("key_sleft", 17);
         touch_add("key_sright", 18);
         touch_add("key_ok", 20);
-
     </script>
-
     <script type='text/javascript'>
-        var statusElement = document.getElementById('status');
-        var progressElement = document.getElementById('progress');
+        const statusElement = document.getElementById('status');
         function print(text) {
             if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
             console.log(text);
@@ -499,18 +676,16 @@
                     text: ''
                 };
                 if (text === Module.setStatus.last.text) return;
-                var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                const m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
                 var now = Date.now();
                 if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
                 Module.setStatus.last.time = now;
                 Module.setStatus.last.text = text;
                 if (m) {
                     text = m[1];
-                    progressElement.value = parseInt(m[2]) * 100;
-                    progressElement.max = parseInt(m[4]) * 100;
-                    progressElement.style.visibility = 'visible';
+                    progressUtil.setValue(m[2] / m[4] * 100)
                 } else {
-                    progressElement.style.visibility = 'hidden';
+                    progressUtil.setValue(100)
                 }
                 statusElement.innerHTML = text;
             },
