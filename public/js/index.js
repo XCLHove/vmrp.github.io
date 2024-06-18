@@ -47,7 +47,7 @@ const app = createApp({
 
         onMounted(() => {
             parseURLSearchParams()
-            getData('/public/data.txt', (data) => {
+            getData('./public/data.txt', (data) => {
                 const decoder = new TextDecoder();
                 localforage.setItem('mrpdb', decoder.decode(data), async (err, v) => {
                     try {
