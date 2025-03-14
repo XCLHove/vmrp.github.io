@@ -94,7 +94,7 @@
                     <template #default="scope">
                         <div style="display: flex; justify-content: center">
                             <el-button link type="danger" @click="del(scope.row)" v-show="admin">删除</el-button>
-                            <el-link type="primary" :href="`/public/mrps/${scope.row.file}`">下载</el-link>
+                            <el-link type="primary" :href="`./public/mrps/${scope.row.file}`">下载</el-link>
                         </div>
                     </template>
                 </el-table-column>
