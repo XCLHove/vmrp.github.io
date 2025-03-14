@@ -60,7 +60,7 @@
                     <template #default="scope">
                         <el-tooltip :content="scope.row.Desc" placement="bottom">
                             <el-link type="primary"
-                                     :href="`/vmrp_v1.0/main.html?f=/public/mrps/${scope.row.file}&title=${scope.row.DisplayName}`"
+                                     :href="`./vmrp_v1.0/main.html?f=../public/mrps/${scope.row.file}&title=${scope.row.DisplayName}`"
                             >{{scope.row.DisplayName}}</el-link>
                         </el-tooltip>
                     </template>
