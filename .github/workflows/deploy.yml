@@ -1,0 +1,19 @@
+on: push
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: 部署静态文件
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 读取仓库内容
+        uses: actions/checkout@v4
+
+      - name: 部署静态文件
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./
+          # 推送到gh-pages分支
+          branch: gh-pages
